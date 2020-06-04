@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.verygood.island.entity.Stamp;
+import com.verygood.island.entity.User;
 import com.verygood.island.exception.bizException.BizException;
 import com.verygood.island.mapper.StampMapper;
 import com.verygood.island.service.StampService;
@@ -74,6 +75,14 @@ public class StampServiceImpl extends ServiceImpl<StampMapper, Stamp> implements
             log.error("更新id为{}的stamp失败", stamp.getStampId());
             throw new BizException("更新失败[id=" + stamp.getStampId() + "]");
         }
+    }
+
+    @Override
+    public void addStamp(Integer userId, String style) {
+        Stamp stamp = new Stamp();
+        stamp.setStampName(style);
+        stamp.setUserId(userId);
+        insertStamp(stamp);
     }
 
 }

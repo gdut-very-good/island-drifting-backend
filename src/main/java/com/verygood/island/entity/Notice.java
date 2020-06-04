@@ -57,6 +57,9 @@ public class Notice extends Model<Notice> {
     private LocalDateTime time;
 
 
+
+
+
     @Override
     protected Serializable pkVal() {
         return this.noticeId;

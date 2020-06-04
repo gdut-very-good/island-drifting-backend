@@ -1,14 +1,17 @@
 package com.verygood.island.service.impl;
 
+import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.verygood.island.constant.Constants;
+import com.verygood.island.entity.Notice;
 import com.verygood.island.entity.Stamp;
 import com.verygood.island.entity.User;
 import com.verygood.island.entity.vo.UserVo;
 import com.verygood.island.exception.bizException.BizException;
 import com.verygood.island.exception.bizException.BizExceptionCodeEnum;
+import com.verygood.island.mapper.NoticeMapper;
 import com.verygood.island.mapper.UserMapper;
 import com.verygood.island.service.StampService;
 import com.verygood.island.service.UserService;
@@ -19,6 +22,7 @@ import com.verygood.island.util.UploadUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -49,6 +53,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Resource
     StampService stampService;
+
+    @Autowired
+    NoticeMapper noticeMapper;
 
 
     private static List<User> users = null;
@@ -165,12 +172,56 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (self.getUserId() == id) {
             userVo.setDistance(0L);
         } else {
+            //查看别人的海岛随机获得邮票和时间胶囊
+            int random = RandomUtil.randomInt(0, 20);
+            switch (random) {
+                case 0:
+                    stampService.addStamp(self.getUserId(), Constants.STAMP_PAIR);
+                    sendNotice("你浏览别人的海岛时获得随机奖励: " + Constants.STAMP_PAIR + " 样式的邮票一张", self.getUserId());
+                    break;
+                case 1:
+                    stampService.addStamp(self.getUserId(), Constants.STAMP_ROSE);
+                    sendNotice("你浏览别人的海岛时获得随机奖励: " + Constants.STAMP_ROSE + " 样式的邮票一张", self.getUserId());
+                    break;
+                case 2:
+                    stampService.addStamp(self.getUserId(), Constants.STAMP_MAN);
+                    sendNotice("你浏览别人的海岛时获得随机奖励: " + Constants.STAMP_MAN + " 样式的邮票一张", self.getUserId());
+                    break;
+                case 3:
+                    stampService.addStamp(self.getUserId(), Constants.STAMP_PEN);
+                    sendNotice("你浏览别人的海岛时获得随机奖励: " + Constants.STAMP_PEN + " 样式的邮票一张", self.getUserId());
+                    break;
+                case 4:
+                    stampService.addStamp(self.getUserId(), Constants.STAMP_BLOOM);
+                    sendNotice("你浏览别人的海岛时获得随机奖励: " + Constants.STAMP_BLOOM + " 样式的邮票一张", self.getUserId());
+                    break;
+                case 5:
+                    self.setCapsule(self.getCapsule() + 1);
+                    sendNotice("你浏览别人的海岛时获得随机奖励: 一个时间胶囊", self.getUserId());
+                    super.updateById(self);
+                    break;
+                default:
+                    break;
+            }
+
             userVo.setDistance(locationUtils.getDistance(self.getCity(), user.getCity()));
         }
 
         return userVo;
 
 
+    }
+
+    /**
+     * 发送通知
+     */
+    private void sendNotice(String content, Integer userId) {
+        Notice notice = new Notice();
+        notice.setTitle("获得奖励通知");
+        notice.setContent(content);
+        notice.setUserId(userId);
+        noticeMapper.insert(notice);
+        log.info("发送notice成功，内容为{}", content);
     }
 
     /**
@@ -239,15 +290,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         // 进行邮票的增加,初始化送 5 张 “中国” 类型邮票
-        for (int i = 0; i < Constants.INIT_STAMP_NUMBER; i++) {
-            Stamp stamp = new Stamp();
-            stamp.setStampName(Constants.STAMP_CHINA);
-            stamp.setUserId(user.getUserId());
-            stampService.insertStamp(stamp);
-        }
+        stampService.addStamp(user.getUserId(), Constants.STAMP_PEN);
+        stampService.addStamp(user.getUserId(), Constants.STAMP_BLOOM);
+        stampService.addStamp(user.getUserId(), Constants.STAMP_MAN);
+        stampService.addStamp(user.getUserId(), Constants.STAMP_LADY);
+        stampService.addStamp(user.getUserId(), Constants.STAMP_ROSE);
 
         return user.getUserId();
     }
+
 
     @Override
     public int deleteUserById(int id) {

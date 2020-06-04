@@ -12,7 +12,15 @@ public class Constants {
     /**
      * 邮票名字
      */
-    public final static String STAMP_CHINA = "中国";
+    public final static String STAMP_PEN = "笔墨";
+    public final static String STAMP_PAIR= "巴黎";
+    public final static String STAMP_ROSE = "玫瑰";
+    public final static String STAMP_BOY = "男孩";
+    public final static String STAMP_GIRL = "女孩";
+    public final static String STAMP_LADY = "女士";
+    public final static String STAMP_MAN = "绅士";
+    public final static String STAMP_BLOOM = "热气球";
+    public final static String STAMP_KEY= "钥匙";
 
     /**
      * 邮票初始数量

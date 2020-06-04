@@ -58,10 +58,8 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
     @Override
     public Page<LetterVo> listLettersByPage(int page, int pageSize, Integer friendId, Integer userId) {
         log.info("正在执行分页查询letter: page = {} pageSize = {} friendId = {} userId = {}", page, pageSize, friendId, userId);
-        QueryWrapper<Letter> queryWrapper = new QueryWrapper<>();
+        QueryWrapper<Letter> queryWrapper = getQueryWrapper(friendId, userId);
         //TODO 这里需要自定义用于匹配的字段,并把wrapper传入下面的page方法
-        queryWrapper.eq("sender_id", friendId).eq("receiver_id", userId)
-                .or().eq("receiver_id", friendId).eq("sender_id", userId);
         Page<Letter> result = super.page(new Page<>(page, pageSize), queryWrapper);
         //转vo
         Page<LetterVo> voPage = new Page<>();
@@ -74,6 +72,13 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
         voPage.setRecords(voList);
         log.info("分页查询letter完毕: 结果数 = {} ", voPage.getRecords().size());
         return voPage;
+    }
+
+    private QueryWrapper<Letter> getQueryWrapper(Integer friendId, Integer userId) {
+        QueryWrapper<Letter> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("sender_id", friendId).eq("receiver_id", userId).isNotNull("receive_time")
+                .or().eq("receiver_id", friendId).eq("sender_id", userId).isNotNull("receive_time").orderByDesc("receive_time");
+        return queryWrapper;
     }
 
     private LetterVo getLetterVo(Letter letter) {
@@ -254,9 +259,7 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
     public List<LetterVo> getOneFriendLetter(Integer friendId, Integer userId) {
         //得到互送的信件
         log.info("正在执行信件查询letter: friendId = {} userId = {}", friendId, userId);
-        QueryWrapper<Letter> queryWrapper = new QueryWrapper<Letter>().eq("sender_id", friendId).eq("receiver_id", userId)
-                .or().eq("receiver_id", friendId).eq("sender_id", userId);
-
+        QueryWrapper<Letter> queryWrapper = getQueryWrapper(friendId, userId);
         List<Letter> letters = super.list(queryWrapper);
         //判空
         if (letters == null) {
@@ -343,7 +346,7 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
             log.info("插入letter成功,id为{}", letter.getLetterId());
             //发送信件
             boolean addTask = scheduledUtils.addTask(letter.getReceiveTime(), new CapsuleSendingTask(letter));
-            if (!addTask){
+            if (!addTask) {
                 throw new BizException("发送时间胶囊失败！");
             }
             return letter.getLetterId();
