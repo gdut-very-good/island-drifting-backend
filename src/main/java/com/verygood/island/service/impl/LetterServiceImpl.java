@@ -280,8 +280,10 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
         return super.list(new QueryWrapper<Letter>().eq("sender_id", userId)
                 // 未发送的信件，即为草稿
                 .eq("is_send", false)
-                // 接收方不是自己，即排除时间胶囊
-                .ne("receiver_id", userId));
+                .and(letter -> letter.isNull("receiver_id")
+                        .or()
+                        // 接收方不是自己，即排除时间胶囊
+                        .ne("receiver_id", userId)));
 
     }
 
