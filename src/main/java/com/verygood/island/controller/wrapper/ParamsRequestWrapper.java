@@ -40,7 +40,7 @@ public class ParamsRequestWrapper extends HttpServletRequestWrapper {
         super(request);
         this.params.putAll(request.getParameterMap());
         //自定义方法，用于参数去重
-        this.modifyParameterValues();
+//        this.modifyParameterValues();
         if (ContentType.APPLICATION_JSON.getMimeType().equals(request.getContentType())) {
             //获取文本数据;
             this.content = IOUtils.toByteArray(request.getInputStream());

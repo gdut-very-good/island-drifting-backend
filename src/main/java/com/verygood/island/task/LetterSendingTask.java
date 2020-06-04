@@ -6,20 +6,17 @@ package com.verygood.island.task;
  * @date 2020-05-23 10:20
  */
 
-import com.verygood.island.entity.Letter;
-import com.verygood.island.entity.Notice;
-import com.verygood.island.entity.Stamp;
-import com.verygood.island.entity.User;
+import com.verygood.island.entity.*;
 import com.verygood.island.exception.bizException.BizException;
-import com.verygood.island.mapper.LetterMapper;
-import com.verygood.island.mapper.NoticeMapper;
-import com.verygood.island.mapper.StampMapper;
-import com.verygood.island.mapper.UserMapper;
+import com.verygood.island.mapper.*;
 import com.verygood.island.util.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 定时发送信件任务
@@ -46,15 +43,31 @@ public class LetterSendingTask implements Runnable {
 
     @Override
     public void run() {
-        //消耗邮票
-        this.useStamp();
+
+
         UserMapper userMapper = BeanUtils.getBean(UserMapper.class);
         LetterMapper letterMapper = BeanUtils.getBean(LetterMapper.class);
+        FriendMapper friendMapper = BeanUtils.getBean(FriendMapper.class);
         //发送信件
         if (null == letter) {
             log.warn("信件为空，无法执行发信任务");
             return;
         }
+
+        //加笔友
+        Map<String, Object> map = new HashMap<>();
+        map.put("user_id", letter.getSenderId());
+        map.put("friend_user_id", letter.getReceiverId());
+        List<Friend> list = friendMapper.selectByMap(map);
+        if (null == list || list.isEmpty()) {
+            Friend friend = new Friend();
+            friend.setUserId(letter.getSenderId());
+            friend.setFriendUserId(letter.getReceiverId());
+            friendMapper.insert(friend);
+        }
+
+        //消耗邮票
+        this.useStamp();
         letter.setReceiveTime(LocalDateTime.now());
         //统计接收到的信件数量
         User receiver = userMapper.selectById(letter.getReceiverId());

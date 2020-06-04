@@ -29,4 +29,9 @@ public class LetterVo {
     邮票样式
      */
     private String stampName;
+
+    /**
+     * 收件人昵称
+     */
+    private String receiverName;
 }

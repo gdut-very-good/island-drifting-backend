@@ -36,7 +36,7 @@ public interface LetterService {
      * @author chaos
      * @since 2020-05-04
      */
-    Letter getLetterById(int id);
+    LetterVo getLetterById(int id);
 
     /**
      * 插入Letter

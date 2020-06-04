@@ -67,10 +67,7 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
         Page<LetterVo> voPage = new Page<>();
         List<LetterVo> voList = new ArrayList<>(voPage.getRecords().size());
         for (Letter letter : result.getRecords()) {
-            LetterVo letterVo = new LetterVo();
-            letterVo.setLetter(letter);
-            letterVo.setStampName(stampMapper.getStampNameByStampId(letter.getStampId()));
-            letterVo.setNickname(userMapper.getNicknameByUserId(letter.getSenderId()));
+            LetterVo letterVo = getLetterVo(letter);
             voList.add(letterVo);
         }
         BeanUtil.copyProperties(result, voPage);
@@ -79,12 +76,22 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
         return voPage;
     }
 
+    private LetterVo getLetterVo(Letter letter) {
+        LetterVo letterVo = new LetterVo();
+        letterVo.setLetter(letter);
+        letterVo.setStampName(stampMapper.getStampNameByStampId(letter.getStampId()));
+        letterVo.setNickname(userMapper.getNicknameByUserId(letter.getSenderId()));
+        letterVo.setReceiverName(userMapper.getNicknameByUserId(letter.getReceiverId()));
+        return letterVo;
+    }
+
     @Override
-    public Letter getLetterById(int id) {
+    public LetterVo getLetterById(int id) {
         log.info("正在查询letter中id为{}的数据", id);
         Letter letter = super.getById(id);
+        LetterVo letterVo = getLetterVo(letter);
         log.info("查询id为{}的letter{}", id, (null == letter ? "无结果" : "成功"));
-        return letter;
+        return letterVo;
     }
 
     @Override
