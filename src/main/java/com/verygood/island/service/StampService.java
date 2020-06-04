@@ -2,6 +2,7 @@ package com.verygood.island.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.verygood.island.entity.Stamp;
+import com.verygood.island.entity.User;
 
 /**
  * <p>
@@ -65,5 +66,13 @@ public interface StampService {
      * @since 2020-05-04
      */
     int updateStamp(Stamp stamp);
+
+
+    /**
+     * 给用户添加邮票
+     * @param userId 用户
+     * @param style 样式
+     */
+    void addStamp(Integer userId, String style);
 
 }

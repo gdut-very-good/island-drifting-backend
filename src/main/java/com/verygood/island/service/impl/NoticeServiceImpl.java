@@ -26,7 +26,8 @@ public class NoticeServiceImpl extends ServiceImpl<NoticeMapper, Notice> impleme
     @Override
     public List<Notice> listNoticesByPage(Integer userId) {
         log.info("正在返回userId={}的通知", userId);
-        QueryWrapper<Notice> queryWrapper = new QueryWrapper<Notice>().eq("user_id", userId).eq("is_read", 0);
+        QueryWrapper<Notice> queryWrapper = new QueryWrapper<Notice>().
+                eq("user_id", userId).orderByDesc("time");
         //TODO 这里需要自定义用于匹配的字段,并把wrapper传入下面的page方法
         List<Notice> notices = super.list(queryWrapper);
         log.info("返回通知数量{}", notices.size());
