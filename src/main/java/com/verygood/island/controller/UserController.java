@@ -51,6 +51,19 @@ public class UserController {
         return new ResultBean<>(userService.getUserById(id));
     }
 
+
+    /**
+     * 根据id查询
+     */
+    @RequestMapping(method = RequestMethod.GET, value = "/me")
+    public ResultBean<?> getByMe() {
+        User principal = (User) SecurityUtils.getSubject().getPrincipal();
+        if (principal == null) {
+            throw new BizException(BizExceptionCodeEnum.NO_LOGIN);
+        }
+        return new ResultBean<>(userService.getUserById(principal.getUserId()));
+    }
+
     /**
      * 随机获取
      */

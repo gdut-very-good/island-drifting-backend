@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -15,14 +16,17 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-public class TreeHoleVo {
+public class TreeHoleVo implements Serializable {
 
 
     private TreeHole hole;
 
+
+    private String nickname;
+
     /*
      *树洞下的留言内容
      */
-    private List<Message> messages;
+    private List<MessageVo> messages;
 
 }

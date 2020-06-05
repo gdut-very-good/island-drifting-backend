@@ -33,7 +33,7 @@ public class LetterController {
      */
     @RequestMapping(method = RequestMethod.GET)
     public ResultBean<?> listByPage(@RequestParam(name = "page", defaultValue = "1") int page,
-                                    @RequestParam(name = "pageSize", defaultValue = "10") int pageSize,
+                                    @RequestParam(name = "pageSize", defaultValue = "1000") int pageSize,
                                     @RequestParam(name = "friendId") Integer friendId) {
         User user = (User) SecurityUtils.getSubject().getPrincipal();
         if (user == null) {

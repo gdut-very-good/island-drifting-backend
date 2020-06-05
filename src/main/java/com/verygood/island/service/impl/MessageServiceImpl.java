@@ -44,6 +44,10 @@ public class MessageServiceImpl extends ServiceImpl<MessageMapper, Message> impl
 
     @Override
     public int insertMessage(Message message) {
+        message.setContent(message.getContent().trim());
+        if (message.getContent().length() > 250) {
+            throw new BizException("留言内容不能超过250个字");
+        }
         log.info("正在插入message");
         message.setTime(LocalDateTime.now());
         if (super.save(message)) {

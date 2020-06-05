@@ -19,4 +19,10 @@ public class UserVo extends User {
      * 距离
      */
     private Long distance;
+
+
+    /**
+     * 发送信息
+     */
+    private String sendInfo;
 }

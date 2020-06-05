@@ -26,7 +26,7 @@ public interface TreeHoleService {
      * @author chaos
      * @since 2020-05-21
      */
-    Page<TreeHole> listTreeHolesByPage(int page, int pageSize);
+    Page<TreeHoleVo> listTreeHolesByPage(int page, int pageSize);
 
     /**
      * 根据id查询TreeHole

@@ -42,4 +42,14 @@ public class Constants {
      */
     public final static Integer LETTER_CONTENT_MAX_LENGTH = 60000;
 
+    /**
+     * 默认头像
+     */
+    public static final String DEFAULT_PHOTO_MAN = "默认头像男.png";
+    public static final String DEFAULT_PHOTO_WOMEN = "默认头像女.png";
+
+    /**
+     * 默认背景
+     */
+    public static final String DEFAULT_BACKGROUND = "默认背景.png";
 }

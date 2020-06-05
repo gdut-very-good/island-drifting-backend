@@ -33,7 +33,7 @@ public class MessageController {
      */
     @RequestMapping(method = RequestMethod.GET)
     public ResultBean<?> listByPage(@RequestParam(name = "page", defaultValue = "1") int page,
-                                    @RequestParam(name = "pageSize", defaultValue = "10") int pageSize,
+                                    @RequestParam(name = "pageSize", defaultValue = "1000") int pageSize,
                                     @RequestParam(name = "factor", defaultValue = "") String factor) {
         return new ResultBean<>(messageService.listMessagesByPage(page, pageSize, factor));
     }

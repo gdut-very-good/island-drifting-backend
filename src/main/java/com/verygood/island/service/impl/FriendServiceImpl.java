@@ -6,11 +6,18 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.verygood.island.entity.Friend;
 import com.verygood.island.entity.User;
+import com.verygood.island.entity.vo.UserVo;
 import com.verygood.island.exception.bizException.BizException;
 import com.verygood.island.mapper.FriendMapper;
 import com.verygood.island.mapper.UserMapper;
 import com.verygood.island.service.FriendService;
+import com.verygood.island.util.LocationUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -28,6 +35,7 @@ import java.util.Map;
  * @since 2020-05-04
  */
 @Slf4j
+@CacheConfig(cacheNames = "friend")
 @Service
 public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> implements FriendService {
 
@@ -37,8 +45,12 @@ public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> impleme
     @Resource
     private UserMapper userMapper;
 
+    @Autowired
+    private LocationUtils locationUtils;
+
     @Override
-    public Page<User> listFriendsByPage(int page, int pageSize, Integer userId) {
+    @Cacheable(key = "#userId")
+    public Page<UserVo> listFriendsByPage(int page, int pageSize, Integer userId) {
         log.info("正在执行分页查询friend: page = {} pageSize = {} ", page, pageSize);
         QueryWrapper<Friend> queryWrapper = new QueryWrapper<>();
         //TODO 这里需要自定义用于匹配的字段,并把wrapper传入下面的page方法
@@ -48,16 +60,10 @@ public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> impleme
             log.info("该userId={}没有笔友", userId);
             return null;
         }
-        List<User> users = new ArrayList<>(result.getRecords().size());
-        log.info("userId{}笔友数量{}", userId, result.getRecords().size());
-        for (Friend friend : result.getRecords()) {
-            QueryWrapper<User> userQueryWrapper = new QueryWrapper<User>().eq("user_id", friend.getFriendUserId());
-            User user = userMapper.selectOne(userQueryWrapper);
-            user.setPassword(null);
-            users.add(user);
-        }
+        List<UserVo> users = getUserVos(userId, result.getRecords());
+
         log.info("分页查询friend完毕: 结果数 = {} ", result.getRecords().size());
-        Page<User> userPage = new Page<>();
+        Page<UserVo> userPage = new Page<>();
         BeanUtil.copyProperties(result, userPage);
         userPage.setRecords(users);
         return userPage;
@@ -72,6 +78,7 @@ public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> impleme
     }
 
     @Override
+    @CacheEvict (key = "#friend.userId")
     public int insertFriend(Friend friend) {
         log.info("正在插入friend");
         if (super.save(friend)) {
@@ -84,19 +91,21 @@ public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> impleme
     }
 
     @Override
-    public int deleteFriendById(int friendId,int userId) {
-        log.info("用户id为{}正在删除id为{}的friend", userId,friendId);
-        QueryWrapper<Friend> queryWrapper=new QueryWrapper<Friend>().eq("friend_user_id",friendId).eq("user_id",userId);
-        if (friendMapper.delete(queryWrapper)>0) {
+    @CacheEvict (key = "#userId")
+    public int deleteFriendById(int friendId, int userId) {
+        log.info("用户id为{}正在删除id为{}的friend", userId, friendId);
+        QueryWrapper<Friend> queryWrapper = new QueryWrapper<Friend>().eq("friend_user_id", friendId).eq("user_id", userId);
+        if (friendMapper.delete(queryWrapper) > 0) {
             log.info("删除id为{}的friend成功", friendId);
             return friendId;
         } else {
-            log.info("删除id为{}的friend失败,用户id为{}没有该好友", friendId,userId);
-            throw new BizException("删除失败[id=" + friendId + "]"+"用户没有该好友");
+            log.info("删除id为{}的friend失败,用户id为{}没有该好友", friendId, userId);
+            throw new BizException("删除失败[id=" + friendId + "]" + "用户没有该好友");
         }
     }
 
     @Override
+    @CacheEvict (key = "#friend.userId")
     public int updateFriend(Friend friend) {
         log.info("正在更新id为{}的friend", friend.getFriendId());
         if (super.updateById(friend)) {
@@ -109,7 +118,8 @@ public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> impleme
     }
 
     @Override
-    public List<User> getUserFriend(Integer userId) {
+    @Cacheable(key = "#userId")
+    public List<UserVo> getUserFriend(Integer userId) {
         log.info("正在查询用户id为{}的所有笔友", userId);
         Map<String, Object> columnMap = new HashMap<>(1);
         columnMap.put("user_id", userId);
@@ -118,13 +128,31 @@ public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> impleme
             log.info("用户id为{}的所有笔友为空", userId);
             return null;
         }
-        List<User> users = new ArrayList<>(friends.size());
+        return getUserVos(userId, friends);
+    }
+
+    private List<UserVo> getUserVos(Integer userId, List<Friend> friends) {
+        User self = userMapper.selectById(userId);
+        List<UserVo> users = new ArrayList<>(friends.size());
         log.info("userId{}笔友数量{}", userId, friends.size());
         for (Friend friend : friends) {
             QueryWrapper<User> userQueryWrapper = new QueryWrapper<User>().eq("user_id", friend.getFriendUserId());
             User user = userMapper.selectOne(userQueryWrapper);
             user.setPassword(null);
-            users.add(user);
+            UserVo userVo = new UserVo();
+            BeanUtils.copyProperties(user, userVo);
+            userVo.setDistance(locationUtils.getDistance(self.getCity(), user.getCity()));
+            userVo.setMail(null);
+            String distance = "";
+            if (userVo.getDistance() > 1000) {
+                distance = "约"+userVo.getDistance() / 1000 + "公里";
+            } else {
+                distance = "小于30公里";
+            }
+            userVo.setSendInfo("距离" + distance + "," +
+                    "预计" + LetterServiceImpl.getSendTime(userVo.getDistance()) +
+                    "后送达");
+            users.add(userVo);
         }
         return users;
     }
