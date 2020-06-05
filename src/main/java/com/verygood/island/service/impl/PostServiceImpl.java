@@ -8,6 +8,9 @@ import com.verygood.island.exception.bizException.BizException;
 import com.verygood.island.mapper.PostMapper;
 import com.verygood.island.service.PostService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -25,6 +28,7 @@ import java.util.Map;
  */
 @Slf4j
 @Service
+@CacheConfig(cacheNames = "post")
 public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements PostService {
 
     @Override
@@ -33,6 +37,13 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         QueryWrapper<Post> queryWrapper = new QueryWrapper<Post>().like("", factor);
         //TODO 这里需要自定义用于匹配的字段,并把wrapper传入下面的page方法
         Page<Post> result = super.page(new Page<>(page, pageSize));
+        List<Post> posts = result.getRecords();
+        for (Post post :
+                posts) {
+            if(post.getContent().length()>120){
+                post.setContent(post.getContent().substring(0,120)+"...");
+            }
+        }
         log.info("分页查询post完毕: 结果数 = {} ", result.getRecords().size());
         return result;
     }
@@ -52,10 +63,15 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     }
 
     @Override
+    @CacheEvict(key = "#post.userId")
     public int insertPost(Post post) {
         log.info("正在插入post");
         post.setView(0);
         post.setTime(LocalDateTime.now());
+        post.setContent(post.getContent().trim());
+        if (post.getContent().length() > 250) {
+            throw new BizException("动态内容不能超过250个字");
+        }
         if (super.save(post)) {
             log.info("插入post成功,id为{}", post.getPostId());
             return post.getPostId();
@@ -66,6 +82,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     }
 
     @Override
+    @CacheEvict(key = "#userId")
     public int deletePostById(int id, Integer userId) {
         log.info("正在删除id为{}的post", id);
 
@@ -93,6 +110,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     }
 
     @Override
+    @CacheEvict(key = "#post.userId")
     public int updatePost(Post post) {
         log.info("正在更新id为{}的post", post.getPostId());
         if (super.updateById(post)) {
@@ -105,14 +123,21 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
     }
 
     @Override
+    @Cacheable(key = "#id")
     public List<Post> getByUserId(Integer id) {
         log.info("正在查询userId为{}的post列表数据", id);
-        Map<String, Object> map = new HashMap<>();
-        map.put("user_id", id);
-        List<Post> posts = super.listByMap(map);
+        QueryWrapper<Post> postQueryWrapper = new QueryWrapper<>();
+        postQueryWrapper.eq("user_id", id).orderByDesc("time");
+        List<Post> posts = super.list(postQueryWrapper);
         if (posts == null) {
             log.info("userId为{}的没有post", id);
             return null;
+        }
+        for (Post post :
+                posts) {
+            if(post.getContent().length()>120){
+                post.setContent(post.getContent().substring(0,120)+"...");
+            }
         }
         return posts;
     }

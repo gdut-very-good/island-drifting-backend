@@ -21,6 +21,10 @@ import com.verygood.island.util.LocationUtils;
 import com.verygood.island.util.ScheduledUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -39,6 +43,7 @@ import java.util.Random;
  */
 @Slf4j
 @Service
+@CacheConfig(cacheNames = "letter")
 public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> implements LetterService {
 
 
@@ -91,6 +96,7 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
     }
 
     @Override
+    @Cacheable(key = "#id")
     public LetterVo getLetterById(int id) {
         log.info("正在查询letter中id为{}的数据", id);
         Letter letter = super.getById(id);
@@ -100,6 +106,7 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
     }
 
     @Override
+    @CachePut(key = "#letter.letterId")
     public int insertLetter(Letter letter) {
         log.info("正在插入letter");
         //不允许输入信件接收时间
@@ -123,6 +130,7 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
     }
 
     @Override
+    @CacheEvict(key = "#id")
     public int deleteLetterById(int id) {
         log.info("正在删除id为{}的letter", id);
         Letter letter = getById(id);
@@ -147,6 +155,7 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
     }
 
     @Override
+    @CacheEvict(key = "#letter.letterId")
     public int updateLetter(Letter letter) {
         log.info("正在更新id为{}的letter", letter.getLetterId());
         Letter letterPo = getById(letter.getLetterId());
@@ -401,6 +410,17 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
         }
         log.info("预计收信时间: {}", receiveTime);
         return receiveTime;
+    }
+
+    public static String getSendTime(long distance) {
+        //每小时经过的距离
+        int milePerHour = 417660;
+        int hour = (int) (distance / milePerHour);
+        if (hour == 0) {
+            return "1分钟";
+        } else {
+            return hour + "小时";
+        }
     }
 
 }

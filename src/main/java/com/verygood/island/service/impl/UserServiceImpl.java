@@ -5,12 +5,14 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.verygood.island.constant.Constants;
+import com.verygood.island.entity.Friend;
 import com.verygood.island.entity.Notice;
 import com.verygood.island.entity.Stamp;
 import com.verygood.island.entity.User;
 import com.verygood.island.entity.vo.UserVo;
 import com.verygood.island.exception.bizException.BizException;
 import com.verygood.island.exception.bizException.BizExceptionCodeEnum;
+import com.verygood.island.mapper.FriendMapper;
 import com.verygood.island.mapper.NoticeMapper;
 import com.verygood.island.mapper.UserMapper;
 import com.verygood.island.service.StampService;
@@ -23,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -56,6 +59,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     NoticeMapper noticeMapper;
+
+    @Autowired
+    FriendMapper friendMapper;
 
 
     private static List<User> users = null;
@@ -123,8 +129,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public Page<UserVo> searchUsersByPage(int page, int pageSize, String factor) {
+        factor = factor.trim();
         log.info("正在执行分页查询user: page = {} pageSize = {} factor = {}", page, pageSize, factor);
-        QueryWrapper<User> queryWrapper = new QueryWrapper<User>().like("nickname", factor);
+        QueryWrapper<User> queryWrapper = new QueryWrapper<User>().like("nickname", factor)
+                .or().likeLeft("nickname", factor).or().likeRight("nickname", factor);
         Page<User> result = super.page(new Page<>(page, pageSize), queryWrapper);
         log.info("分页查询user完毕: 结果数 = {} ", result.getRecords().size());
 
@@ -133,6 +141,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (null == self) {
             throw new BizException(BizExceptionCodeEnum.NO_LOGIN);
         }
+        self = super.getById(self.getUserId());
 
         //转成vo类型
         List<User> records = result.getRecords();
@@ -163,6 +172,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 查看自己的信息
         User self = (User) SecurityUtils.getSubject().getPrincipal();
+        self = super.getById(self.getUserId());
 
         // 新建一个返回的vo
         UserVo userVo = new UserVo();
@@ -241,6 +251,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user = users.get(new Random().nextInt(users.size()));
         // 查看自己的信息
         User self = (User) SecurityUtils.getSubject().getPrincipal();
+        self = super.getById(self.getUserId());
         //转成vo
         UserVo userVo = new UserVo();
         BeanUtils.copyProperties(user, userVo);
@@ -278,6 +289,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 设置三个时间胶囊
         user.setCapsule(Constants.INIT_CAPSULE_NUMBER);
 
+
+        //设置默认头像
+        int random = RandomUtil.randomInt(0, 1);
+        if (random == 0) {
+            user.setPhoto(Constants.DEFAULT_PHOTO_MAN);
+        } else {
+            user.setPhoto(Constants.DEFAULT_PHOTO_WOMEN);
+        }
+
         // 对密码进行加密
         user.setPassword(Md5Util.getMd5String(user.getPassword()));
 
@@ -289,6 +309,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BizException("添加失败");
         }
 
+        //添加开发者笔友
+        User islandDeveloper = super.getOne(new QueryWrapper<User>().eq("username", "island"));
+        addFriend(user.getUserId(), islandDeveloper);
+
         // 进行邮票的增加,初始化送 5 张 “中国” 类型邮票
         stampService.addStamp(user.getUserId(), Constants.STAMP_PEN);
         stampService.addStamp(user.getUserId(), Constants.STAMP_BLOOM);
@@ -297,6 +321,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         stampService.addStamp(user.getUserId(), Constants.STAMP_ROSE);
 
         return user.getUserId();
+    }
+
+    /**
+     * 加好友
+     *
+     * @param userId     用户id
+     * @param friendUser 朋友
+     */
+    private void addFriend(Integer userId, User friendUser) {
+        if (friendUser != null) {
+            Friend friend = new Friend();
+            friend.setUserId(userId);
+            friend.setFriendUserId(friendUser.getUserId());
+            friendMapper.insert(friend);
+        }
     }
 
 
@@ -319,7 +358,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setPhoto(null);
         user.setSendLetter(null);
         user.setReceiveLetter(null);
-        locationUtils.isValidLocation(user.getCity());
+        user.setPassword(null);
+        if (user.getCity() != null && !locationUtils.isValidLocation(user.getCity())) {
+            throw new BizException("您填写的地址无法识别: " + user.getCity());
+        }
         if (super.updateById(user)) {
             log.info("更新d为{}的user成功", user.getUserId());
             return user.getUserId();
@@ -340,9 +382,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User userPo = getOne(new QueryWrapper<User>().eq("user_id", userId));
 
         // 删除旧的头像地址
-        if (!StringUtils.isEmpty(userPo.getPhoto())) {
-            UploadUtils.deleteFile(userPo.getPhoto());
-        }
+        tryDeleteOldImage(userPo.getPhoto());
 
         // 设置图片地址
         userPo.setPhoto(result.getName());
@@ -350,6 +390,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         updateById(userPo);
 
         return result.getName();
+    }
+
+    /**
+     * 尝试删除旧图
+     *
+     * @param photo
+     */
+    private void tryDeleteOldImage(String photo) {
+        if (!StringUtils.isEmpty(photo)) {
+            if (!Constants.DEFAULT_PHOTO_MAN.equalsIgnoreCase(photo) &&
+                    !Constants.DEFAULT_PHOTO_WOMEN.equalsIgnoreCase(photo) &&
+                    !Constants.DEFAULT_BACKGROUND.equalsIgnoreCase(photo)) {
+                UploadUtils.deleteFile(photo);
+            }
+        }
     }
 
     @Override
@@ -362,9 +417,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User userPo = getOne(new QueryWrapper<User>().eq("user_id", userId));
 
         // 删除旧的背景地址
-        if (!StringUtils.isEmpty(userPo.getBackground())) {
-            UploadUtils.deleteFile(userPo.getBackground());
-        }
+        tryDeleteOldImage(userPo.getBackground());
 
         // 设置图片地址
         userPo.setBackground(result.getName());

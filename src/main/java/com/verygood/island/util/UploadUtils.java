@@ -60,8 +60,6 @@ public class UploadUtils {
         File file = new File(PATH + "/" + fileName);
         if (file.exists()) {
             file.delete();
-        } else {
-            throw new RuntimeException("文件不存在，无法删除");
         }
     }
 
