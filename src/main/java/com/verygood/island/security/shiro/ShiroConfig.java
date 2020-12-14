@@ -47,7 +47,7 @@ public class ShiroConfig {
         CustomDefaultWebSessionManager manager = new CustomDefaultWebSessionManager();
         manager.setSessionDAO(new EnterpriseCacheSessionDAO());
         //半年过期
-        manager.setGlobalSessionTimeout(4320*CustomDefaultWebSessionManager.DEFAULT_SESSION_VALIDATION_INTERVAL);
+        manager.setGlobalSessionTimeout(4320 * CustomDefaultWebSessionManager.DEFAULT_SESSION_VALIDATION_INTERVAL);
         return manager;
     }
 

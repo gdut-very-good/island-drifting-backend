@@ -14,9 +14,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * <p>
@@ -40,8 +38,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         List<Post> posts = result.getRecords();
         for (Post post :
                 posts) {
-            if(post.getContent().length()>120){
-                post.setContent(post.getContent().substring(0,120)+"...");
+            if (post.getContent().length() > 120) {
+                post.setContent(post.getContent().substring(0, 120) + "...");
             }
         }
         log.info("分页查询post完毕: 结果数 = {} ", result.getRecords().size());
@@ -135,8 +133,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post> implements Po
         }
         for (Post post :
                 posts) {
-            if(post.getContent().length()>120){
-                post.setContent(post.getContent().substring(0,120)+"...");
+            if (post.getContent().length() > 120) {
+                post.setContent(post.getContent().substring(0, 120) + "...");
             }
         }
         return posts;

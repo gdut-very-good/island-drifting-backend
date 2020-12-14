@@ -1,11 +1,9 @@
 package com.verygood.island.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.api.R;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.verygood.island.entity.Reply;
-import com.verygood.island.entity.User;
 import com.verygood.island.entity.vo.ReplyVo;
 import com.verygood.island.exception.bizException.BizException;
 import com.verygood.island.mapper.ReplyMapper;
@@ -51,18 +49,18 @@ public class ReplyServiceImpl extends ServiceImpl<ReplyMapper, Reply> implements
         log.info("正在查询reply中id为{}的数据", id);
         Reply reply = super.getById(id);
         log.info("查询id为{}的reply{}", id, (null == reply ? "无结果" : "成功"));
-        if(reply==null){
+        if (reply == null) {
             return null;
         }
-        ReplyVo replyVo=new ReplyVo();
+        ReplyVo replyVo = new ReplyVo();
         replyVo.setReply(reply);
         //设置回复用户头像和昵称
-        if(reply.getWriterId()!=null) {
+        if (reply.getWriterId() != null) {
             replyVo.setReplyName(userMapper.getNicknameByUserId(reply.getWriterId()));
             replyVo.setReplyPhoto(userMapper.getPhotoById(reply.getWriterId()));
         }
         //设置被回复用户头像和昵称
-        if(reply.getBeReplyId()!=null) {
+        if (reply.getBeReplyId() != null) {
             replyVo.setBeReplyPhoto(userMapper.getPhotoById(reply.getBeReplyId()));
             replyVo.setBeReplyName(userMapper.getNicknameByUserId(reply.getBeReplyId()));
         }
@@ -112,16 +110,16 @@ public class ReplyServiceImpl extends ServiceImpl<ReplyMapper, Reply> implements
         Map<String, Object> map = new HashMap<>();
         map.put("post_id", id);
         List<Reply> replays = super.listByMap(map);
-        List<ReplyVo> replyVos=new ArrayList<>(replays.size());
-        for(Reply reply:replays){
-            ReplyVo replyVo=new ReplyVo();
+        List<ReplyVo> replyVos = new ArrayList<>(replays.size());
+        for (Reply reply : replays) {
+            ReplyVo replyVo = new ReplyVo();
             //设置被回复用户头像和昵称
-            if(reply.getBeReplyId()!=null) {
+            if (reply.getBeReplyId() != null) {
                 replyVo.setBeReplyPhoto(userMapper.getPhotoById(reply.getBeReplyId()));
                 replyVo.setBeReplyName(userMapper.getNicknameByUserId(reply.getBeReplyId()));
             }
             replyVo.setReply(reply);
-            if(reply.getWriterId()!=null) {
+            if (reply.getWriterId() != null) {
                 replyVo.setReplyName(userMapper.getNicknameByUserId(reply.getWriterId()));
                 replyVo.setReplyPhoto(userMapper.getPhotoById(reply.getWriterId()));
             }

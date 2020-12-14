@@ -149,7 +149,7 @@ public class UserController {
      * 退出登陆方法
      */
     @RequestMapping(method = RequestMethod.POST, value = "/logout")
-    public ResultBean<?> logout(){
+    public ResultBean<?> logout() {
         Subject subject = SecurityUtils.getSubject();
         subject.logout();
         return new ResultBean<>(true);

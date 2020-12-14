@@ -26,10 +26,6 @@ import java.util.Map;
 @Component
 public class LocationUtils {
 
-    @Autowired
-    private ObjectMapper objectMapper;
-    @Autowired
-    private RestTemplate restTemplate;
     /**
      * api密钥
      */
@@ -38,11 +34,37 @@ public class LocationUtils {
      * 地理编码 api url
      */
     public static final String GEOCODE_URL = "https://restapi.amap.com/v3/geocode/geo";
-
     /**
      * 地理路径 api url
      */
     public static final String DISTANCE_URL = "https://restapi.amap.com/v3/distance";
+    @Autowired
+    private ObjectMapper objectMapper;
+    @Autowired
+    private RestTemplate restTemplate;
+
+    /**
+     * 将map转换成url
+     *
+     * @param map
+     * @return 返回添加参数的url
+     */
+    public static String formatUrlParamsByMap(String url, Map<String, String> map) {
+        if (map == null) {
+            return "";
+        }
+        StringBuilder stringBuilder = new StringBuilder(url);
+        stringBuilder.append("?");
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            stringBuilder.append(entry.getKey()).append("=").append(entry.getValue());
+            stringBuilder.append("&");
+        }
+        String s = stringBuilder.toString();
+        if (s.endsWith("&")) {
+            s = StringUtils.substringBeforeLast(s, "&");
+        }
+        return s;
+    }
 
     /**
      * 将一个地址信息转成经纬度
@@ -68,7 +90,6 @@ public class LocationUtils {
         }
         return responseObj.get("geocodes").get(0).get("location");
     }
-
 
     /**
      * 判断一个地址信息是否可以解析
@@ -162,29 +183,5 @@ public class LocationUtils {
             throw new RuntimeException("地址解析失败");
         }
         return responseObj;
-    }
-
-
-    /**
-     * 将map转换成url
-     *
-     * @param map
-     * @return 返回添加参数的url
-     */
-    public static String formatUrlParamsByMap(String url, Map<String, String> map) {
-        if (map == null) {
-            return "";
-        }
-        StringBuilder stringBuilder = new StringBuilder(url);
-        stringBuilder.append("?");
-        for (Map.Entry<String, String> entry : map.entrySet()) {
-            stringBuilder.append(entry.getKey()).append("=").append(entry.getValue());
-            stringBuilder.append("&");
-        }
-        String s = stringBuilder.toString();
-        if (s.endsWith("&")) {
-            s = StringUtils.substringBeforeLast(s, "&");
-        }
-        return s;
     }
 }

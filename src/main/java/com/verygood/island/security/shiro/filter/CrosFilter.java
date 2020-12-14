@@ -17,6 +17,21 @@ import java.io.IOException;
 public class CrosFilter extends FormAuthenticationFilter {
 
 
+    public static void setResponse(HttpServletResponse response) {
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            response.setCharacterEncoding("UTF-8");
+            response.setContentType("application/json");
+            ResultBean resultBean = ResultBean.builder().code("3001").message("请登录后操作!").build();
+            response.getWriter().write(objectMapper.writeValueAsString(resultBean));
+            response.getWriter().flush();
+            response.getWriter().close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     //解决OPTIONS请求跨域问题
     @Override
     protected boolean isAccessAllowed(ServletRequest request, ServletResponse response, Object mappedValue) {
@@ -61,21 +76,6 @@ public class CrosFilter extends FormAuthenticationFilter {
             return Boolean.TRUE;
         }
         return Boolean.FALSE;
-    }
-
-    public static void setResponse(HttpServletResponse response) {
-
-        try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            response.setCharacterEncoding("UTF-8");
-            response.setContentType("application/json");
-            ResultBean resultBean = ResultBean.builder().code("3001").message("请登录后操作!").build();
-            response.getWriter().write(objectMapper.writeValueAsString(resultBean));
-            response.getWriter().flush();
-            response.getWriter().close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
 
