@@ -59,6 +59,16 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
     @Autowired
     private ScheduledUtils scheduledUtils;
 
+    public static String getSendTime(long distance) {
+        //每小时经过的距离
+        int milePerHour = 417660;
+        int hour = (int) (distance / milePerHour);
+        if (hour == 0) {
+            return "1分钟";
+        } else {
+            return hour + "小时";
+        }
+    }
 
     @Override
     public Page<LetterVo> listLettersByPage(int page, int pageSize, Integer friendId, Integer userId) {
@@ -186,7 +196,6 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
         }
     }
 
-
     /**
      * 创建发信任务
      *
@@ -262,7 +271,6 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
         log.info("正在启动定时任务");
         scheduledUtils.addTask(calculateReceiveTime(distance), new LetterSendingTask(letter));
     }
-
 
     @Override
     public List<LetterVo> getOneFriendLetter(Integer friendId, Integer userId) {
@@ -410,17 +418,6 @@ public class LetterServiceImpl extends ServiceImpl<LetterMapper, Letter> impleme
         }
         log.info("预计收信时间: {}", receiveTime);
         return receiveTime;
-    }
-
-    public static String getSendTime(long distance) {
-        //每小时经过的距离
-        int milePerHour = 417660;
-        int hour = (int) (distance / milePerHour);
-        if (hour == 0) {
-            return "1分钟";
-        } else {
-            return hour + "小时";
-        }
     }
 
 }

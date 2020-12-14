@@ -11,7 +11,6 @@ import com.verygood.island.util.BeanUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
 import java.time.LocalDateTime;
 
 /**

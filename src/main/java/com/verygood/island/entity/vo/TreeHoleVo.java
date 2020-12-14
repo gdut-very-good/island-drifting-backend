@@ -1,6 +1,5 @@
 package com.verygood.island.entity.vo;
 
-import com.verygood.island.entity.Message;
 import com.verygood.island.entity.TreeHole;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

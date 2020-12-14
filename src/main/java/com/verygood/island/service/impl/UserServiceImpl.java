@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.verygood.island.constant.Constants;
 import com.verygood.island.entity.Friend;
 import com.verygood.island.entity.Notice;
-import com.verygood.island.entity.Stamp;
 import com.verygood.island.entity.User;
 import com.verygood.island.entity.vo.UserVo;
 import com.verygood.island.exception.bizException.BizException;
@@ -25,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.SecurityUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -51,36 +49,41 @@ import java.util.Random;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
 
-    @Resource
-    LocationUtils locationUtils;
-
-    @Resource
-    StampService stampService;
-
-    @Autowired
-    NoticeMapper noticeMapper;
-
-    @Autowired
-    FriendMapper friendMapper;
-
-
     private static List<User> users = null;
-
     /**
      * 用户名的正则表达式：4-16位的字母数字组合（可包含其中一种）
      */
     private final String NAME_PATTERN = "^[a-zA-Z0-9]{4,16}$";
-
     /**
      * 密码的正则表达式：6-16位的字母数字组合（必须包含字母，数字）
      */
     private final String PASSWORD_PATTERN = "^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,16}$";
+    @Resource
+    LocationUtils locationUtils;
+    @Resource
+    StampService stampService;
+    @Autowired
+    NoticeMapper noticeMapper;
+    @Autowired
+    FriendMapper friendMapper;
 
     public static List<User> getUserList() {
         if (null == users) {
             cacheUsers();
         }
         return users;
+    }
+
+    @Scheduled(cron = "0 15 * * * ?")
+    public static void cacheUsers() {
+        UserMapper userMapper = com.verygood.island.util.BeanUtils.getBean(UserMapper.class);
+        log.info("正在清空缓存的用户数据");
+        if (users != null) {
+            users.clear();
+        }
+        log.info("正在缓存用户");
+        users = userMapper.selectList(new QueryWrapper<>());
+        log.info("缓存成功：{}条用户数据", users.size());
     }
 
     /**
@@ -115,7 +118,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         return userPo;
     }
-
 
     /**
      * 分页查询User
@@ -338,7 +340,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
     }
 
-
     @Override
     public int deleteUserById(int id) {
         log.info("正在删除id为{}的user", id);
@@ -454,17 +455,5 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         log.info("上传的文件名称：【{}】", file.getOriginalFilename());
         return UploadUtils.upload(file, UploadUtils.getFileName(file.getOriginalFilename()));
-    }
-
-    @Scheduled(cron = "0 15 * * * ?")
-    public static void cacheUsers() {
-        UserMapper userMapper = com.verygood.island.util.BeanUtils.getBean(UserMapper.class);
-        log.info("正在清空缓存的用户数据");
-        if (users != null) {
-            users.clear();
-        }
-        log.info("正在缓存用户");
-        users = userMapper.selectList(new QueryWrapper<>());
-        log.info("缓存成功：{}条用户数据", users.size());
     }
 }

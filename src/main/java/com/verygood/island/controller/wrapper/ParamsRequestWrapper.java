@@ -105,7 +105,8 @@ public class ParamsRequestWrapper extends HttpServletRequestWrapper {
         } else {
             String[] strArr = (String[]) v;
             if (strArr.length > 0) {
-                return strArr[0];} else {
+                return strArr[0];
+            } else {
                 return null;
             }
         }

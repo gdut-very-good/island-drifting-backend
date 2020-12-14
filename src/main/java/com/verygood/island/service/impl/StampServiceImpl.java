@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.verygood.island.entity.Stamp;
-import com.verygood.island.entity.User;
 import com.verygood.island.exception.bizException.BizException;
 import com.verygood.island.mapper.StampMapper;
 import com.verygood.island.service.StampService;
