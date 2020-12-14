@@ -19,12 +19,10 @@ import java.time.ZoneOffset;
 @Slf4j
 public class ScheduledUtils {
 
+    private static final String KEY = "letters";
+    private static final String ZONE_OFFSET = "+8";
     @Autowired
     private RedisUtils redisUtils;
-
-    private static final String KEY = "letters";
-
-    private static final String ZONE_OFFSET = "+8";
 
     /**
      * 100ms执行一次
@@ -55,7 +53,7 @@ public class ScheduledUtils {
 
         Boolean result;
         result = redisUtils.add(KEY, runnable, startTime.toEpochSecond(ZoneOffset.of(ZONE_OFFSET)));
-        if (result == null){
+        if (result == null) {
             return false;
         }
         return result;

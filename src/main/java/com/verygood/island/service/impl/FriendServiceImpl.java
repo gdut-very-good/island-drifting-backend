@@ -78,7 +78,7 @@ public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> impleme
     }
 
     @Override
-    @CacheEvict (key = "#friend.userId")
+    @CacheEvict(key = "#friend.userId")
     public int insertFriend(Friend friend) {
         log.info("正在插入friend");
         if (super.save(friend)) {
@@ -91,7 +91,7 @@ public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> impleme
     }
 
     @Override
-    @CacheEvict (key = "#userId")
+    @CacheEvict(key = "#userId")
     public int deleteFriendById(int friendId, int userId) {
         log.info("用户id为{}正在删除id为{}的friend", userId, friendId);
         QueryWrapper<Friend> queryWrapper = new QueryWrapper<Friend>().eq("friend_user_id", friendId).eq("user_id", userId);
@@ -105,7 +105,7 @@ public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> impleme
     }
 
     @Override
-    @CacheEvict (key = "#friend.userId")
+    @CacheEvict(key = "#friend.userId")
     public int updateFriend(Friend friend) {
         log.info("正在更新id为{}的friend", friend.getFriendId());
         if (super.updateById(friend)) {
@@ -145,7 +145,7 @@ public class FriendServiceImpl extends ServiceImpl<FriendMapper, Friend> impleme
             userVo.setMail(null);
             String distance = "";
             if (userVo.getDistance() > 1000) {
-                distance = "约"+userVo.getDistance() / 1000 + "公里";
+                distance = "约" + userVo.getDistance() / 1000 + "公里";
             } else {
                 distance = "小于30公里";
             }

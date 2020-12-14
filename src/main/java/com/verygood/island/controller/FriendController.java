@@ -69,7 +69,7 @@ public class FriendController {
         if (user == null) {
             throw new BizException(BizExceptionCodeEnum.NO_LOGIN);
         }
-        return new ResultBean<>(friendService.deleteFriendById(id,user.getUserId()));
+        return new ResultBean<>(friendService.deleteFriendById(id, user.getUserId()));
     }
 
     /**
@@ -83,7 +83,7 @@ public class FriendController {
 
 
     /**
-     *获得所有好友
+     * 获得所有好友
      */
     @RequestMapping(method = RequestMethod.GET, value = "/all")
     public ResultBean<?> getUserFriend() {
